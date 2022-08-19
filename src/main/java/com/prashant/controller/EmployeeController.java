@@ -38,12 +38,13 @@ public class EmployeeController {
 	}
 	
 	@GetMapping("/{name}")
-	public ResponseEntity<Employee>fnidByName(@PathVariable String name){
+	public ResponseEntity<Employee>findByName(@PathVariable String name){
 		Optional<Employee>employee = employeeRepository.findByFirstName(name);
 		return new ResponseEntity<Employee>(employee.get(),HttpStatus.OK);
 	}
 	
 	@PreAuthorize("hasRole('ADMIN')")
+	
 	@PutMapping("/{id}")
 	public void Update(@PathVariable Long id,@RequestBody Employee empl){
 		Employee emp = employeeRepository.findById(id).get();

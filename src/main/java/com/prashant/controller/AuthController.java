@@ -17,10 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.prashant.entity.Role;
 import com.prashant.entity.User;
+import com.prashant.payload.JWTAuthResponse;
 import com.prashant.payload.LoginDto;
 import com.prashant.payload.SignUpDto;
 import com.prashant.repository.RoleRepository;
 import com.prashant.repository.UserRepository;
+import com.prashant.security.JwtTokenprovider;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -38,12 +40,18 @@ private AuthenticationManager authenticationManager;
 @Autowired
 private PasswordEncoder encoder;
 
+@Autowired
+JwtTokenprovider jwtTokeProvider;
+
+
 @PostMapping("/signin")
-public ResponseEntity<String>authenticateUser(@RequestBody LoginDto loginDto){
+public ResponseEntity<JWTAuthResponse>authenticateUser(@RequestBody LoginDto loginDto){
 Authentication authentication  =	authenticationManager.authenticate
 	(new UsernamePasswordAuthenticationToken(loginDto.getUsernameOrEmail(), loginDto.getPassword()));
 SecurityContextHolder.getContext().setAuthentication(authentication);
-return new ResponseEntity<String>("user Signed successfully",HttpStatus.OK);
+//get token from tokenProvider
+String token = jwtTokeProvider.generateToken(authentication);
+return  ResponseEntity.ok(new JWTAuthResponse(token));
 	
 }
 
