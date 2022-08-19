@@ -3,6 +3,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -15,14 +16,25 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.prashant.security.CustomUserDetailsService;
+import com.prashant.security.JwtAuthenticationEntryPoint;
+import com.prashant.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfiguration {
 	
 	@Autowired
 	private CustomUserDetailsService customUserDetailsService;
+	
+	@Autowired
+	private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+	
+	@Bean
+	public JwtAuthenticationFilter jwtAuthenticationFilter() {
+		return new JwtAuthenticationFilter();
+	}
+	
 	  @Bean
 	  BCryptPasswordEncoder encode() { 
 	 return new BCryptPasswordEncoder();
@@ -31,18 +43,16 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     	http.cors().and().csrf()
-        .disable()
-        .authorizeRequests().antMatchers(HttpMethod.GET,"/api/**").permitAll()
+        .disable().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
+        .sessionManagement()
+        .sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().authenticationProvider(authenticationProvider())
+        .authorizeRequests().antMatchers(HttpMethod.GET,"/api/**").permitAll().antMatchers(HttpMethod.POST,"/api/**").permitAll()
+        .antMatchers(HttpMethod.PUT,"/api/**").permitAll()
         .antMatchers("/api/auth/**").permitAll()
          .anyRequest()
         .authenticated()
-        .and()
-        .httpBasic()
-        .and()
-        .sessionManagement()
-        .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-    	http.headers().frameOptions().disable();
-    	http.authenticationProvider(authenticationProvider());
+        .and().
+    	authenticationProvider(authenticationProvider());
 		return http.build();
      
     }
